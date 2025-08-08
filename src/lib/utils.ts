@@ -19,12 +19,12 @@ export function scrollToBottom(element: HTMLElement) {
 export function isIframe(): boolean {
   try {
     return window.self !== window.top;
-  } catch (e) {
+  } catch {
     return true;
   }
 }
 
-export function postMessageToParent(data: any) {
+export function postMessageToParent(data: { type: string; [key: string]: unknown }) {
   if (isIframe() && window.parent) {
     window.parent.postMessage(data, "*");
   }

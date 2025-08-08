@@ -1,5 +1,4 @@
-import { openai } from '@ai-sdk/openai';
-import { streamText } from 'ai';
+import axios from 'axios';
 import { NextRequest } from 'next/server';
 
 // 民泊に関する基本情報（実際の運用では環境変数やデータベースから取得）
@@ -21,24 +20,151 @@ const MINPAKU_CONTEXT = `
 4. 安全に関わる重要な情報は必ず正確にお伝えください
 `;
 
+// DeepSeek API設定
+const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+
+interface Message {
+  role: 'system' | 'user' | 'assistant';
+  content: string;
+}
+
 export async function POST(req: NextRequest) {
   try {
+    // APIキーの確認
+    if (!DEEPSEEK_API_KEY) {
+      console.error('DEEPSEEK_API_KEY is not configured');
+      return new Response(
+        JSON.stringify({ 
+          error: 'APIキーが設定されていません。管理者にお問い合わせください。' 
+        }),
+        { 
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
     const { messages } = await req.json();
 
-    const result = await streamText({
-      model: openai('gpt-4-turbo'),
-      system: MINPAKU_CONTEXT,
-      messages,
+    // メッセージの検証
+    if (!messages || !Array.isArray(messages)) {
+      return new Response(
+        JSON.stringify({ error: '無効なメッセージ形式です。' }),
+        { 
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // システムメッセージを含むメッセージ配列を構築
+    const formattedMessages: Message[] = [
+      { role: 'system', content: MINPAKU_CONTEXT },
+      ...messages.map((msg: { role: string; content: string }) => ({
+        role: msg.role as 'user' | 'assistant',
+        content: msg.content
+      }))
+    ];
+
+    // DeepSeek APIリクエスト設定
+    const requestData = {
+      model: 'deepseek-chat',
+      messages: formattedMessages,
       temperature: 0.7,
+      max_tokens: 2000,
+      stream: true
+    };
+
+    // DeepSeek APIへのリクエスト
+    const response = await axios.post(DEEPSEEK_API_URL, requestData, {
+      headers: {
+        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      responseType: 'stream',
+      timeout: 30000, // 30秒タイムアウト
     });
 
-    return result.toTextStreamResponse();
+    // ストリーミングレスポンスの設定
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          let buffer = '';
+          
+          response.data.on('data', (chunk: Buffer) => {
+            buffer += chunk.toString();
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+              const trimmedLine = line.trim();
+              if (trimmedLine === '' || trimmedLine === 'data: [DONE]') {
+                continue;
+              }
+
+              if (trimmedLine.startsWith('data: ')) {
+                try {
+                  const jsonStr = trimmedLine.slice(6);
+                  const data = JSON.parse(jsonStr);
+                  
+                  if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
+                    const content = data.choices[0].delta.content;
+                    const formattedChunk = `0:${JSON.stringify({ content })}\n`;
+                    controller.enqueue(encoder.encode(formattedChunk));
+                  }
+                } catch (parseError) {
+                  console.error('JSON parse error:', parseError);
+                }
+              }
+            }
+          });
+
+          response.data.on('end', () => {
+            controller.close();
+          });
+
+          response.data.on('error', (error: Error) => {
+            console.error('Stream error:', error);
+            controller.error(error);
+          });
+
+        } catch (error) {
+          console.error('Stream processing error:', error);
+          controller.error(error);
+        }
+      }
+    });
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
+      },
+    });
+
   } catch (error) {
-    console.error('Chat API error:', error);
+    console.error('DeepSeek API error:', error);
+    
+    // エラーの詳細な処理
+    let errorMessage = 'チャットサービスに一時的な問題が発生しています。しばらくしてからもう一度お試しください。';
+    
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 401) {
+        errorMessage = 'APIキーが無効です。管理者にお問い合わせください。';
+      } else if (error.response?.status === 429) {
+        errorMessage = 'リクエストが多すぎます。しばらく待ってからもう一度お試しください。';
+      } else if (error.response?.status === 500) {
+        errorMessage = 'DeepSeekサービスに問題が発生しています。しばらくしてからもう一度お試しください。';
+      } else if (error.code === 'ECONNABORTED') {
+        errorMessage = 'リクエストがタイムアウトしました。もう一度お試しください。';
+      }
+    }
+
     return new Response(
-      JSON.stringify({ 
-        error: 'チャットサービスに一時的な問題が発生しています。しばらくしてからもう一度お試しください。' 
-      }),
+      JSON.stringify({ error: errorMessage }),
       { 
         status: 500,
         headers: { 'Content-Type': 'application/json' }

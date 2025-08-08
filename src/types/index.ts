@@ -37,5 +37,5 @@ export interface EmbedConfig {
 
 export interface ParentMessage {
   type: "resize" | "close" | "minimize" | "theme-change";
-  data?: any;
+  data?: Record<string, unknown>;
 }
