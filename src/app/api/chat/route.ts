@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { NextRequest } from 'next/server';
+import { searchSimilarDocuments, SearchResult } from '@/lib/rag';
 
 // 民泊に関する基本情報（実際の運用では環境変数やデータベースから取得）
 const MINPAKU_CONTEXT = `
@@ -27,6 +28,38 @@ const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 interface Message {
   role: 'system' | 'user' | 'assistant';
   content: string;
+}
+
+/**
+ * Generate enhanced context using RAG search
+ */
+async function generateRAGContext(userQuery: string): Promise<string> {
+  try {
+    // Search for relevant documents
+    const searchResults = await searchSimilarDocuments(userQuery, 0.7, 3);
+    
+    if (searchResults.length === 0) {
+      return MINPAKU_CONTEXT;
+    }
+
+    // Build enhanced context with search results
+    const ragContext = `${MINPAKU_CONTEXT}
+
+関連する情報:
+${searchResults.map((result: SearchResult, index: number) => 
+  `${index + 1}. 【${result.category}】${result.title}
+   ${result.content}
+   (関連度: ${(result.similarity * 100).toFixed(1)}%)`
+).join('\n\n')}
+
+上記の関連情報を参考にして、より具体的で正確な回答を提供してください。`;
+
+    return ragContext;
+  } catch (error) {
+    console.error('RAG search error:', error);
+    // Fallback to basic context if RAG fails
+    return MINPAKU_CONTEXT;
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -58,9 +91,16 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // 最新のユーザーメッセージを取得してRAGコンテキストを生成
+    const userMessages = messages.filter((msg: any) => msg.role === 'user');
+    const latestUserMessage = userMessages[userMessages.length - 1]?.content || '';
+    
+    // RAG検索を使用して拡張コンテキストを生成
+    const enhancedContext = await generateRAGContext(latestUserMessage);
+
     // システムメッセージを含むメッセージ配列を構築
     const formattedMessages: Message[] = [
-      { role: 'system', content: MINPAKU_CONTEXT },
+      { role: 'system', content: enhancedContext },
       ...messages.map((msg: { role: string; content: string }) => ({
         role: msg.role as 'user' | 'assistant',
         content: msg.content
