@@ -123,4 +123,3 @@ export const minpakuDocuments: MinpakuDocument[] = [
     category: "買い物・グルメ"
   }
 ];
-f
