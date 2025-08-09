@@ -67,6 +67,13 @@ ${searchResults.map((result: SearchResult, index: number) =>
 
 export async function POST(req: NextRequest) {
   try {
+    // 環境変数のデバッグログ
+    console.log('[DEBUG] Environment check:');
+    console.log('[DEBUG] DEEPSEEK_API_KEY:', DEEPSEEK_API_KEY ? 'SET' : 'NOT SET');
+    console.log('[DEBUG] SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'SET' : 'NOT SET');
+    console.log('[DEBUG] SUPABASE_ANON_KEY:', process.env.SUPABASE_ANON_KEY ? 'SET' : 'NOT SET');
+    console.log('[DEBUG] OPENAI_API_KEY_FOR_EMBEDDINGS:', process.env.OPENAI_API_KEY_FOR_EMBEDDINGS ? 'SET' : 'NOT SET');
+
     // APIキーの確認
     if (!DEEPSEEK_API_KEY) {
       console.error('DEEPSEEK_API_KEY is not configured');
