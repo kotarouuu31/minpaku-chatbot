@@ -55,6 +55,13 @@ export default function ChatInterface({
     setIsLoading(true);
 
     try {
+      console.log('[CHAT-UI] Sending message to API:', userMessage.content);
+      console.log('[CHAT-UI] API endpoint:', '/api/chat');
+      console.log('[CHAT-UI] Messages payload:', [...messages, userMessage].map(msg => ({
+        role: msg.role,
+        content: msg.content
+      })));
+
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
@@ -68,10 +75,15 @@ export default function ChatInterface({
         }),
       });
 
+      console.log('[CHAT-UI] Response status:', response.status);
+      console.log('[CHAT-UI] Response ok:', response.ok);
+
       if (!response.ok) {
+        console.error('[CHAT-UI] Response not ok:', response.status, response.statusText);
         throw new Error('Failed to get response');
       }
 
+      console.log('[CHAT-UI] Starting to read response stream');
       const reader = response.body?.getReader();
       const decoder = new TextDecoder();
       let assistantContent = '';
@@ -86,11 +98,16 @@ export default function ChatInterface({
       setMessages((prev) => [...prev, assistantMessage]);
 
       if (reader) {
+        console.log('[CHAT-UI] Reader available, starting stream processing');
         while (true) {
           const { done, value } = await reader.read();
-          if (done) break;
+          if (done) {
+            console.log('[CHAT-UI] Stream reading completed');
+            break;
+          }
           
           const chunk = decoder.decode(value);
+          console.log('[CHAT-UI] Received chunk:', chunk.substring(0, 100) + '...');
           const lines = chunk.split('\n');
           
           for (const line of lines) {
@@ -107,17 +124,20 @@ export default function ChatInterface({
                     )
                   );
                 }
-              } catch {
-              // Ignore parsing errors
+              } catch (parseError) {
+                console.warn('[CHAT-UI] JSON parse error:', parseError);
               }
             }
           }
         }
+      } else {
+        console.error('[CHAT-UI] No reader available from response');
       }
       
+      console.log('[CHAT-UI] Final assistant content length:', assistantContent.length);
       setIsLoading(false);
     } catch (error) {
-      console.error("Error sending message:", error);
+      console.error("[CHAT-UI] Error sending message:", error);
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: "申し訳ございませんが、一時的な問題が発生しました。しばらくしてからもう一度お試しください。",
