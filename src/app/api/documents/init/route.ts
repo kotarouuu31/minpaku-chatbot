@@ -1,15 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { storeDocumentWithChunks } from '@/lib/rag';
+import { storeDocumentWithChunks, supabaseAdmin } from '@/lib/rag';
 import { minpakuDocuments } from '@/data/minpaku-documents';
 
 // POST: Initialize database with sample documents
 export async function POST(req: NextRequest) {
   try {
+    // Debug: Check environment variables
+    console.log('Environment variables check:');
+    console.log('NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'SET' : 'NOT SET');
+    console.log('SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'NOT SET');
+    console.log('OPENAI_API_KEY_FOR_EMBEDDINGS:', process.env.OPENAI_API_KEY_FOR_EMBEDDINGS ? 'SET' : 'NOT SET');
+
     const { reset } = await req.json();
 
     if (reset) {
-      // TODO: Add function to clear existing documents if needed
-      console.log('Reset flag detected - would clear existing documents');
+      console.log('Reset flag detected - clearing existing documents');
+      try {
+        // Delete all existing documents
+        const { error: deleteError } = await supabaseAdmin
+          .from('documents')
+          .delete()
+          .neq('id', 0); // Delete all rows
+        
+        if (deleteError) {
+          console.error('Error deleting documents:', deleteError);
+        } else {
+          console.log('All existing documents deleted successfully');
+        }
+      } catch (error) {
+        console.error('Error during reset:', error);
+      }
     }
 
     let successCount = 0;

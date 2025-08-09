@@ -37,11 +37,12 @@ export default function AdminDashboard() {
   const [isLoadingDocs, setIsLoadingDocs] = useState(false);
 
   const categories = [
-    { key: "checkin_checkout", name: "チェックイン・チェックアウト" },
-    { key: "facilities_wifi", name: "WiFi・設備利用ガイド" },
-    { key: "nearby_facilities", name: "周辺施設情報" },
-    { key: "faq_troubleshooting", name: "よくある質問・トラブル対応" },
-    { key: "house_rules", name: "ハウスルール・注意事項" }
+    { key: "チェックイン・チェックアウト", name: "チェックイン・チェックアウト" },
+    { key: "設備・アメニティ", name: "WiFi・設備利用ガイド" },
+    { key: "交通・アクセス", name: "周辺施設情報" },
+    { key: "観光・グルメ", name: "よくある質問・トラブル対応" },
+    { key: "緊急時・安全", name: "緊急時・安全" },
+    { key: "ルール・マナー", name: "ハウスルール・注意事項" }
   ];
 
   const initializeDocuments = async (reset = false) => {
@@ -86,8 +87,11 @@ export default function AdminDashboard() {
   const loadDocumentsByCategory = async (category: string) => {
     setIsLoadingDocs(true);
     try {
-      const response = await fetch(`/api/documents?category=${category}`);
+      console.log('Loading documents for category:', category);
+      const response = await fetch(`/api/documents?category=${encodeURIComponent(category)}`);
       const result = await response.json();
+      console.log('Category API response:', result);
+      console.log('Documents found:', result.documents?.length || 0);
       setDocuments(result.documents || []);
       setSelectedCategory(category);
     } catch (error) {

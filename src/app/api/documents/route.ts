@@ -14,8 +14,11 @@ export async function GET(req: NextRequest) {
     const query = searchParams.get('query');
 
     if (query) {
-      // Search for similar documents
-      const results = await searchSimilarDocuments(query, 0.5, 10);
+      // Search for similar documents with lower threshold for debugging
+      console.log('Searching for query:', query);
+      const results = await searchSimilarDocuments(query, 0.1, 10);
+      console.log('Search results count:', results.length);
+      console.log('Search results:', results);
       return NextResponse.json({ documents: results });
     } else if (category) {
       // Get documents by category
