@@ -3,7 +3,8 @@ import {
   storeDocumentWithChunks, 
   getDocumentsByCategory, 
   deleteDocument,
-  searchSimilarDocuments 
+  searchSimilarDocuments,
+  updateDocument
 } from '@/lib/rag';
 
 // GET: Retrieve documents by category or search
@@ -63,6 +64,35 @@ export async function POST(req: NextRequest) {
     console.error('Error in POST /api/documents:', error);
     return NextResponse.json(
       { error: 'ドキュメントの保存に失敗しました。' },
+      { status: 500 }
+    );
+  }
+}
+
+// PUT: Update document by ID
+export async function PUT(req: NextRequest) {
+  try {
+    const { id, title, content, category } = await req.json();
+    
+    // Validation
+    if (!id || !title || !content || !category) {
+      return NextResponse.json(
+        { error: '必須フィールドが不足しています。' },
+        { status: 400 }
+      );
+    }
+
+    // Update document (delete and recreate with new embedding)
+    await updateDocument(parseInt(id), title, content, category);
+    
+    return NextResponse.json({
+      message: 'ドキュメントが正常に更新されました。',
+      success: true
+    });
+  } catch (error) {
+    console.error('Error in PUT /api/documents:', error);
+    return NextResponse.json(
+      { error: 'ドキュメントの更新に失敗しました。' },
       { status: 500 }
     );
   }

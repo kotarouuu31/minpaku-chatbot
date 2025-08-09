@@ -213,6 +213,8 @@ export async function getDocumentsByCategory(category: string): Promise<Document
  */
 export async function deleteDocument(id: number): Promise<void> {
   try {
+    console.log('Deleting document with ID:', id);
+    
     const { error } = await supabaseAdmin
       .from('documents')
       .delete()
@@ -220,10 +222,37 @@ export async function deleteDocument(id: number): Promise<void> {
 
     if (error) {
       console.error('Error deleting document:', error);
-      throw new Error(`Failed to delete document: ${error.message}`);
+      throw error;
     }
+
+    console.log('Document deleted successfully');
   } catch (error) {
     console.error('Error in deleteDocument:', error);
+    throw error;
+  }
+}
+
+/**
+ * Update document by ID (delete and recreate with new embedding)
+ */
+export async function updateDocument(
+  id: number,
+  title: string,
+  content: string,
+  category: string
+): Promise<void> {
+  try {
+    console.log('Updating document with ID:', id);
+    
+    // Delete existing document
+    await deleteDocument(id);
+    
+    // Create new document with updated content and new embedding
+    await storeDocumentWithChunks(title, content, category);
+    
+    console.log('Document updated successfully');
+  } catch (error) {
+    console.error('Error in updateDocument:', error);
     throw error;
   }
 }
