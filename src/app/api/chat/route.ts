@@ -105,8 +105,14 @@ export async function POST(req: NextRequest) {
     const userMessages = messages.filter((msg: any) => msg.role === 'user');
     const latestUserMessage = userMessages[userMessages.length - 1]?.content || '';
     
+    console.log('[CHAT-API] Latest user message:', latestUserMessage);
+    console.log('[CHAT-API] About to call generateRAGContext...');
+    
     // RAG検索を使用して拡張コンテキストを生成
     const enhancedContext = await generateRAGContext(latestUserMessage);
+    
+    console.log('[CHAT-API] Enhanced context generated, length:', enhancedContext.length);
+    console.log('[CHAT-API] Enhanced context preview:', enhancedContext.substring(0, 200) + '...');
 
     // システムメッセージを含むメッセージ配列を構築
     const formattedMessages: Message[] = [
