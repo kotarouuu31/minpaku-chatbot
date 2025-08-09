@@ -157,7 +157,9 @@ export default function ChatInterface({
       exit={{ opacity: 0, scale: 0.95, y: 20 }}
       className={cn(
         "flex flex-col bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border border-orange-200 dark:border-gray-700 rounded-2xl shadow-2xl overflow-hidden",
-        isEmbedded ? "h-full" : "h-[600px] w-[400px]"
+        isEmbedded 
+          ? "h-full w-full" 
+          : "h-[600px] w-full max-w-[400px] sm:max-w-[400px] mx-auto"
       )}
     >
       {/* ヘッダー */}
