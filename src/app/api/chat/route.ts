@@ -170,7 +170,7 @@ export async function POST(req: NextRequest) {
             controller.error(error);
           });
 
-        } catch (error) {
+        } catch (error: unknown) {
           console.error('Stream processing error:', error);
           controller.error(error);
         }

@@ -107,8 +107,8 @@ export default function ChatInterface({
                     )
                   );
                 }
-              } catch (e) {
-                // Ignore parsing errors
+              } catch {
+              // Ignore parsing errors
               }
             }
           }

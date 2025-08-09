@@ -5,13 +5,13 @@ import { motion } from "framer-motion";
 import { 
   Database, 
   Search, 
-  Upload, 
-  Trash2, 
+  FileText, 
   RefreshCw, 
-  CheckCircle, 
-  AlertCircle,
-  FileText,
-  BarChart3
+
+  Upload,
+  Trash2,
+  CheckCircle,
+  AlertCircle
 } from "lucide-react";
 
 interface Document {
@@ -30,7 +30,7 @@ export default function AdminDashboard() {
   const [isInitializing, setIsInitializing] = useState(false);
   const [initResult, setInitResult] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [searchResults, setSearchResults] = useState<Array<{id: string, title: string, content: string, category: string, similarity?: number}>>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -240,7 +240,7 @@ export default function AdminDashboard() {
                     <div className="flex items-center justify-between mb-2">
                       <h4 className="font-medium jp-text">{result.title}</h4>
                       <span className="text-sm bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 px-2 py-1 rounded">
-                        {(result.similarity * 100).toFixed(1)}%
+                        {((result.similarity || 0) * 100).toFixed(1)}%
                       </span>
                     </div>
                     <p className="text-sm text-muted-foreground jp-text line-clamp-2">

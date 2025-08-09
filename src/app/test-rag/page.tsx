@@ -5,7 +5,7 @@ import { useState } from 'react';
 export default function TestRAGPage() {
   const [initStatus, setInitStatus] = useState<string>('');
   const [testQuery, setTestQuery] = useState<string>('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<Array<{id: string, title: string, content: string, category: string, similarity?: number}>>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   // 初期データ投入テスト
@@ -103,7 +103,7 @@ export default function TestRAGPage() {
                 <div className="flex justify-between items-start mb-2">
                   <h4 className="font-medium">{result.title}</h4>
                   <span className="text-sm text-gray-500">
-                    類似度: {(result.similarity * 100).toFixed(1)}%
+                    類似度: {((result.similarity || 0) * 100).toFixed(1)}%
                   </span>
                 </div>
                 <p className="text-sm text-gray-700">{result.content}</p>
