@@ -42,7 +42,7 @@ export default function AdminDashboard() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletingDocId, setDeletingDocId] = useState<number | null>(null);
   const [selectedDocs, setSelectedDocs] = useState<number[]>([]);
-
+  
   const categories = [
     { key: "チェックイン・チェックアウト", name: "チェックイン・チェックアウト" },
     { key: "設備・アメニティ", name: "WiFi・設備利用ガイド" },
@@ -51,6 +51,15 @@ export default function AdminDashboard() {
     { key: "緊急時・安全", name: "緊急時・安全" },
     { key: "ルール・マナー", name: "ハウスルール・注意事項" }
   ];
+
+  // 新規追加機能のstate
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newDocument, setNewDocument] = useState({
+    title: '',
+    content: '',
+    category: categories[0].key
+  });
+  const [isAdding, setIsAdding] = useState(false);
 
   const initializeDocuments = async (reset = false) => {
     setIsInitializing(true);
@@ -175,6 +184,40 @@ export default function AdminDashboard() {
       }
     } catch (error) {
       alert('更新中にエラーが発生しました。');
+    }
+  };
+
+  // 新規追加機能
+  const addDocument = async () => {
+    if (!newDocument.title.trim() || !newDocument.content.trim()) {
+      alert('タイトルと内容は必須です。');
+      return;
+    }
+
+    setIsAdding(true);
+    try {
+      const response = await fetch('/api/documents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newDocument)
+      });
+      const result = await response.json();
+      
+      if (result.success) {
+        alert('新しいドキュメントを追加しました。');
+        setShowAddModal(false);
+        setNewDocument({ title: '', content: '', category: categories[0].key });
+        // 現在選択中のカテゴリを再読み込み
+        if (selectedCategory) {
+          loadDocumentsByCategory(selectedCategory);
+        }
+      } else {
+        alert('追加に失敗しました: ' + result.error);
+      }
+    } catch (error) {
+      alert('追加中にエラーが発生しました。');
+    } finally {
+      setIsAdding(false);
     }
   };
 
@@ -401,15 +444,24 @@ export default function AdminDashboard() {
                 <FileText className="w-6 h-6 text-orange-500" />
                 <h2 className="text-xl font-bold jp-text">カテゴリ別ドキュメント</h2>
               </div>
-              {documents.length > 0 && (
+              <div className="flex space-x-4">
                 <button
-                  onClick={checkDuplicatesAndConflicts}
-                  className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors flex items-center space-x-2"
+                  onClick={() => setShowAddModal(true)}
+                  className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors flex items-center space-x-2"
                 >
-                  <AlertCircle className="w-4 h-4" />
-                  <span>重複・矛盾チェック</span>
+                  <Upload className="w-4 h-4" />
+                  <span>新規追加</span>
                 </button>
-              )}
+                {documents.length > 0 && (
+                  <button
+                    onClick={checkDuplicatesAndConflicts}
+                    className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors flex items-center space-x-2"
+                  >
+                    <AlertCircle className="w-4 h-4" />
+                    <span>重複・矛盾チェック</span>
+                  </button>
+                )}
+              </div>
             </div>
             
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
@@ -593,6 +645,71 @@ export default function AdminDashboard() {
                     onClick={() => {
                       setShowDeleteConfirm(false);
                       setDeletingDocId(null);
+                    }}
+                    className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
+                  >
+                    キャンセル
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 新規追加モーダル */}
+          {showAddModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full mx-4">
+                <h3 className="text-xl font-bold mb-4">新しいドキュメント追加</h3>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">タイトル</label>
+                    <input
+                      type="text"
+                      value={newDocument.title}
+                      onChange={(e) => setNewDocument({...newDocument, title: e.target.value})}
+                      placeholder="例：冬季限定・こたつレンタル"
+                      className="w-full px-3 py-2 border rounded-lg"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-2">カテゴリ</label>
+                    <select
+                      value={newDocument.category}
+                      onChange={(e) => setNewDocument({...newDocument, category: e.target.value})}
+                      className="w-full px-3 py-2 border rounded-lg"
+                    >
+                      {categories.map(cat => (
+                        <option key={cat.key} value={cat.key}>{cat.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-2">内容</label>
+                    <textarea
+                      value={newDocument.content}
+                      onChange={(e) => setNewDocument({...newDocument, content: e.target.value})}
+                      placeholder="詳しい情報を入力してください..."
+                      rows={8}
+                      className="w-full px-3 py-2 border rounded-lg"
+                    />
+                  </div>
+                </div>
+                
+                <div className="flex space-x-4 mt-6">
+                  <button
+                    onClick={addDocument}
+                    disabled={isAdding}
+                    className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors disabled:opacity-50"
+                  >
+                    {isAdding ? '追加中...' : '追加'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowAddModal(false);
+                      setNewDocument({ title: '', content: '', category: categories[0].key });
                     }}
                     className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition-colors"
                   >
