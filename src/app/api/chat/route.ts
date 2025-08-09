@@ -37,7 +37,7 @@ async function generateRAGContext(userQuery: string): Promise<string> {
   try {
     // Search for relevant documents
     console.log('[RAG] Searching for:', userQuery);
-    const searchResults = await searchSimilarDocuments(userQuery, 0.3, 5);
+    const searchResults = await searchSimilarDocuments(userQuery, 0.1, 10);
     console.log('[RAG] Search results:', searchResults.length, 'documents found');
     console.log('[RAG] Results:', searchResults.map(r => ({ title: r.title, similarity: r.similarity })));
     
