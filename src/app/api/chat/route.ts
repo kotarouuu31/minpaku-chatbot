@@ -36,7 +36,10 @@ interface Message {
 async function generateRAGContext(userQuery: string): Promise<string> {
   try {
     // Search for relevant documents
-    const searchResults = await searchSimilarDocuments(userQuery, 0.7, 3);
+    console.log('[RAG] Searching for:', userQuery);
+    const searchResults = await searchSimilarDocuments(userQuery, 0.5, 5);
+    console.log('[RAG] Search results:', searchResults.length, 'documents found');
+    console.log('[RAG] Results:', searchResults.map(r => ({ title: r.title, similarity: r.similarity })));
     
     if (searchResults.length === 0) {
       return MINPAKU_CONTEXT;
