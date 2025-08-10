@@ -142,22 +142,10 @@ export async function searchSimilarDocuments(
   matchCount: number = 3
 ): Promise<SearchResult[]> {
   try {
-    console.log('[RAG-LIB] Starting search for:', query);
-    console.log('[RAG-LIB] Parameters:', { matchThreshold, matchCount });
-    
-    // Check environment variables
-    console.log('[RAG-LIB] Environment check:');
-    console.log('[RAG-LIB] SUPABASE_URL:', supabaseUrl ? 'SET' : 'NOT SET');
-    console.log('[RAG-LIB] SUPABASE_SERVICE_ROLE_KEY:', supabaseServiceKey ? 'SET' : 'NOT SET');
-    console.log('[RAG-LIB] OPENAI_API_KEY_FOR_EMBEDDINGS:', process.env.OPENAI_API_KEY_FOR_EMBEDDINGS ? 'SET' : 'NOT SET');
-
     // Generate embedding for the query
-    console.log('[RAG-LIB] Generating embedding...');
     const queryEmbedding = await generateEmbedding(query);
-    console.log('[RAG-LIB] Embedding generated, length:', queryEmbedding.length);
 
     // Search for similar documents using the match_documents function
-    console.log('[RAG-LIB] Calling match_documents function...');
     const { data, error } = await supabaseAdmin.rpc('match_documents', {
       query_embedding: queryEmbedding,
       match_threshold: matchThreshold,
@@ -165,22 +153,13 @@ export async function searchSimilarDocuments(
     });
 
     if (error) {
-      console.error('[RAG-LIB] Supabase RPC error:', error);
+      console.error('RAG search error:', error);
       throw new Error(`Failed to search documents: ${error.message}`);
-    }
-
-    console.log('[RAG-LIB] Search completed, results count:', data?.length || 0);
-    if (data && data.length > 0) {
-      console.log('[RAG-LIB] First result:', {
-        title: data[0].title,
-        category: data[0].category,
-        similarity: data[0].similarity
-      });
     }
 
     return data || [];
   } catch (error) {
-    console.error('[RAG-LIB] Error in searchSimilarDocuments:', error);
+    console.error('Error in searchSimilarDocuments:', error);
     throw error;
   }
 }

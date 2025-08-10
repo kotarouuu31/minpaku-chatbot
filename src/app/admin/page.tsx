@@ -13,24 +13,23 @@ import {
   CheckCircle,
   AlertCircle
 } from "lucide-react";
+import { Document, SearchResult, InitResult, Category } from "@/types";
 
-interface Document {
-  id: number;
-  title: string;
-  content: string;
-  category: string;
-  similarity?: number;
-}
-
-interface SearchResult extends Document {
-  similarity: number;
-}
+// カテゴリ定数
+const CATEGORIES: Category[] = [
+  { key: "チェックイン・チェックアウト", name: "チェックイン・チェックアウト" },
+  { key: "設備・アメニティ", name: "WiFi・設備利用ガイド" },
+  { key: "交通・アクセス", name: "周辺施設情報" },
+  { key: "観光・グルメ", name: "よくある質問・トラブル対応" },
+  { key: "緊急時・安全", name: "緊急時・安全" },
+  { key: "ルール・マナー", name: "ハウスルール・注意事項" }
+];
 
 export default function AdminDashboard() {
   const [isInitializing, setIsInitializing] = useState(false);
-  const [initResult, setInitResult] = useState<any>(null);
+  const [initResult, setInitResult] = useState<InitResult | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<Array<{id: string, title: string, content: string, category: string, similarity?: number}>>([]);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [documents, setDocuments] = useState<Document[]>([]);
@@ -43,21 +42,15 @@ export default function AdminDashboard() {
   const [deletingDocId, setDeletingDocId] = useState<number | null>(null);
   const [selectedDocs, setSelectedDocs] = useState<number[]>([]);
   
-  const categories = [
-    { key: "チェックイン・チェックアウト", name: "チェックイン・チェックアウト" },
-    { key: "設備・アメニティ", name: "WiFi・設備利用ガイド" },
-    { key: "交通・アクセス", name: "周辺施設情報" },
-    { key: "観光・グルメ", name: "よくある質問・トラブル対応" },
-    { key: "緊急時・安全", name: "緊急時・安全" },
-    { key: "ルール・マナー", name: "ハウスルール・注意事項" }
-  ];
+  // カテゴリ一覧を取得
+  const categories = CATEGORIES;
 
   // 新規追加機能のstate
   const [showAddModal, setShowAddModal] = useState(false);
   const [newDocument, setNewDocument] = useState({
     title: '',
     content: '',
-    category: categories[0].key
+    category: CATEGORIES[0].key
   });
   const [isAdding, setIsAdding] = useState(false);
 
@@ -77,6 +70,7 @@ export default function AdminDashboard() {
     } catch (error) {
       setInitResult({ 
         success: false, 
+        message: 'ネットワークエラーが発生しました。',
         error: 'ネットワークエラーが発生しました。' 
       });
     } finally {
@@ -102,17 +96,19 @@ export default function AdminDashboard() {
 
   const loadDocumentsByCategory = async (category: string) => {
     setIsLoadingDocs(true);
+    
     try {
-      console.log('Loading documents for category:', category);
       const response = await fetch(`/api/documents?category=${encodeURIComponent(category)}`);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       const result = await response.json();
-      console.log('Category API response:', result);
-      console.log('Documents found:', result.documents?.length || 0);
       setDocuments(result.documents || []);
       setSelectedCategory(category);
     } catch (error) {
       console.error('Load documents error:', error);
       setDocuments([]);
+      alert('ドキュメントの読み込みに失敗しました。');
     } finally {
       setIsLoadingDocs(false);
     }
@@ -140,6 +136,7 @@ export default function AdminDashboard() {
         alert('削除に失敗しました: ' + result.error);
       }
     } catch (error) {
+      console.error('Delete document error:', error);
       alert('削除中にエラーが発生しました。');
     }
   };
@@ -183,6 +180,7 @@ export default function AdminDashboard() {
         alert('更新に失敗しました: ' + result.error);
       }
     } catch (error) {
+      console.error('Update document error:', error);
       alert('更新中にエラーが発生しました。');
     }
   };
@@ -206,7 +204,7 @@ export default function AdminDashboard() {
       if (result.success) {
         alert('新しいドキュメントを追加しました。');
         setShowAddModal(false);
-        setNewDocument({ title: '', content: '', category: categories[0].key });
+        setNewDocument({ title: '', content: '', category: CATEGORIES[0].key });
         // 現在選択中のカテゴリを再読み込み
         if (selectedCategory) {
           loadDocumentsByCategory(selectedCategory);
@@ -215,6 +213,7 @@ export default function AdminDashboard() {
         alert('追加に失敗しました: ' + result.error);
       }
     } catch (error) {
+      console.error('Add document error:', error);
       alert('追加中にエラーが発生しました。');
     } finally {
       setIsAdding(false);

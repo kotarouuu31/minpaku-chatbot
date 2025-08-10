@@ -39,3 +39,55 @@ export interface ParentMessage {
   type: "resize" | "close" | "minimize" | "theme-change";
   data?: Record<string, unknown>;
 }
+
+// RAG関連の型定義
+export interface Document {
+  id: number;
+  title: string;
+  content: string;
+  category: string;
+  similarity?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface SearchResult {
+  id: number;
+  title: string;
+  content: string;
+  category: string;
+  similarity: number;
+}
+
+export interface InitResult {
+  success: boolean;
+  message: string;
+  count?: number;
+  error?: string;
+  stats?: {
+    success: number;
+    errors: number;
+    total: number;
+  };
+}
+
+export interface Category {
+  key: string;
+  name: string;
+}
+
+// API関連の型定義
+export interface ApiResponse<T = unknown> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  message?: string;
+}
+
+export interface DeepSeekResponse {
+  choices: Array<{
+    message: {
+      content: string;
+    };
+  }>;
+}

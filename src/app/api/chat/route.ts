@@ -1,7 +1,8 @@
 import axios from 'axios';
 import { NextRequest } from 'next/server';
-import { searchSimilarDocuments, SearchResult } from '@/lib/rag';
+import { searchSimilarDocuments } from '@/lib/rag';
 import { getMinpakuConfig } from '@/config/minpaku-config';
+import { SearchResult, DeepSeekResponse } from '@/types';
 
 // 設定を取得（これで「サンプル民泊」問題を解決）
 const config = getMinpakuConfig();
@@ -56,10 +57,7 @@ interface Message {
 async function generateRAGContext(userQuery: string): Promise<string> {
   try {
     // Search for relevant documents
-    console.log('[RAG] Searching for:', userQuery);
     const searchResults = await searchSimilarDocuments(userQuery, 0.1, 10);
-    console.log('[RAG] Search results:', searchResults.length, 'documents found');
-    console.log('[RAG] Results:', searchResults.map(r => ({ title: r.title, similarity: r.similarity })));
     
     if (searchResults.length === 0) {
       return MINPAKU_CONTEXT;
@@ -87,13 +85,6 @@ ${searchResults.map((result: SearchResult, index: number) =>
 
 export async function POST(req: NextRequest) {
   try {
-    // 環境変数のデバッグログ
-    console.log('[DEBUG] Environment check:');
-    console.log('[DEBUG] DEEPSEEK_API_KEY:', DEEPSEEK_API_KEY ? 'SET' : 'NOT SET');
-    console.log('[DEBUG] SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'SET' : 'NOT SET');
-    console.log('[DEBUG] SUPABASE_ANON_KEY:', process.env.SUPABASE_ANON_KEY ? 'SET' : 'NOT SET');
-    console.log('[DEBUG] OPENAI_API_KEY_FOR_EMBEDDINGS:', process.env.OPENAI_API_KEY_FOR_EMBEDDINGS ? 'SET' : 'NOT SET');
-
     // APIキーの確認
     if (!DEEPSEEK_API_KEY) {
       console.error('DEEPSEEK_API_KEY is not configured');
@@ -122,17 +113,11 @@ export async function POST(req: NextRequest) {
     }
 
     // 最新のユーザーメッセージを取得してRAGコンテキストを生成
-    const userMessages = messages.filter((msg: any) => msg.role === 'user');
+    const userMessages = messages.filter((msg: Message) => msg.role === 'user');
     const latestUserMessage = userMessages[userMessages.length - 1]?.content || '';
-    
-    console.log('[CHAT-API] Latest user message:', latestUserMessage);
-    console.log('[CHAT-API] About to call generateRAGContext...');
     
     // RAG検索を使用して拡張コンテキストを生成
     const enhancedContext = await generateRAGContext(latestUserMessage);
-    
-    console.log('[CHAT-API] Enhanced context generated, length:', enhancedContext.length);
-    console.log('[CHAT-API] Enhanced context preview:', enhancedContext.substring(0, 200) + '...');
 
     // システムメッセージを含むメッセージ配列を構築
     const formattedMessages: Message[] = [
