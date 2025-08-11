@@ -5,7 +5,7 @@ import { Send, Minimize2, X, MessageCircle, Globe } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Message } from "@/types";
 import { cn, scrollToBottom, postMessageToParent } from "@/lib/utils";
-import { getLanguageConfig, detectLanguage } from "@/lib/language-detection";
+import { getLanguageConfig } from "@/lib/language-detection";
 import MessageBubble from "./MessageBubble";
 import TypingIndicator from "./TypingIndicator";
 import LanguageSelector from "./LanguageSelector";
@@ -75,11 +75,11 @@ export default function ChatInterface({
   const sendMessage = async (content: string) => {
     if (!content.trim() || isLoading) return;
 
-    // 自動言語検出
-    const detectedLang = detectLanguage(content);
-    if (detectedLang !== selectedLanguage) {
-      setSelectedLanguage(detectedLang);
-    }
+    // ❌ 削除: クイック返信では自動言語検出を行わない
+    // const detectedLang = detectLanguage(content);
+    // if (detectedLang !== selectedLanguage) {
+    //   setSelectedLanguage(detectedLang);
+    // }
 
     const userMessage: Message = {
       id: Date.now().toString(),

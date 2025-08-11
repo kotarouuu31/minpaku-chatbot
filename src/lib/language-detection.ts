@@ -13,43 +13,43 @@ export const SUPPORTED_LANGUAGES: LanguageConfig[] = [
     code: 'ja',
     name: '日本語',
     flag: '🇯🇵',
-    systemPrompt: '日本語で丁寧に回答してください。敬語を適切に使用し、親切で温かい応対を心がけてください。',
-    welcomeMessage: 'ととのいヴィラPALへようこそ！お気軽にご質問ください。チェックイン方法、周辺情報、設備について何でもお答えします。',
+    systemPrompt: '簡潔で親切な日本語で回答してください。基本は2-3文、詳細要求時はより詳しく説明してください。',
+    welcomeMessage: 'ととのいヴィラPALへようこそ！ご質問をお聞かせください。',
     placeholderText: 'メッセージを入力してください...',
-    quickReplies: ['チェックイン方法は？', '近くのお店を教えて', 'Wi-Fiパスワードは？', '周辺の観光地は？']
+    quickReplies: ['チェックイン方法は？', '近くのお店を教えて', 'Wi-Fiパスワードは？', '詳細を教えて']
   },
   {
     code: 'en',
     name: 'English',
     flag: '🇺🇸',
-    systemPrompt: 'Please respond in clear, polite English. You are a customer support AI for "Totonoiii Villa PAL" in Izu, Japan. Provide helpful information about the property, local area, and Japanese customs when relevant.',
-    welcomeMessage: 'Welcome to Totonoiii Villa PAL! I\'m here to help with check-in procedures, local recommendations, amenities, and anything else you need during your stay.',
+    systemPrompt: 'Respond concisely (2-3 sentences) by default, provide details when requested.',
+    welcomeMessage: 'Welcome to Totonoiii Villa PAL! How can I help you?',
     placeholderText: 'Type your message...',
-    quickReplies: ['How to check in?', 'Nearby restaurants?', 'Wi-Fi password?', 'Local attractions?']
+    quickReplies: ['How to check in?', 'Nearby restaurants?', 'Wi-Fi password?', 'Tell me more']
   },
   {
     code: 'zh',
     name: '中文',
     flag: '🇨🇳',
-    systemPrompt: '请用简体中文礼貌地回答。您是位于日本伊豆的"整备别墅PAL"的客户支持AI。请提供有关设施、当地信息的帮助，并在相关时解释日本的习俗。',
-    welcomeMessage: '欢迎来到整备别墅PAL！我可以帮助您了解入住手续、当地推荐、设施信息以及住宿期间的任何问题。',
+    systemPrompt: '默认简洁回答2-3句话，有详细要求时提供详细说明。',
+    welcomeMessage: '欢迎来到整备别墅PAL！有什么可以帮助您的吗？',
     placeholderText: '请输入您的消息...',
-    quickReplies: ['如何办理入住？', '附近的餐厅？', 'Wi-Fi密码？', '当地景点？']
+    quickReplies: ['如何办理入住？', '附近的餐厅？', 'Wi-Fi密码？', '告诉我更多']
   },
   {
     code: 'ko',
     name: '한국어',
     flag: '🇰🇷',
-    systemPrompt: '정중한 한국어로 답변해 주세요. 당신은 일본 이즈에 위치한 "토토노이 빌라 PAL"의 고객 지원 AI입니다. 시설, 지역 정보에 대한 도움을 제공하고 관련된 일본 관습에 대해서도 설명해 주세요.',
-    welcomeMessage: '토토노이 빌라 PAL에 오신 것을 환영합니다! 체크인 절차, 현지 추천 정보, 시설 안내 및 숙박 중 필요한 모든 것을 도와드리겠습니다.',
+    systemPrompt: '기본은 2-3문장으로 간결하게, 상세 요청시 자세히 설명해주세요.',
+    welcomeMessage: '토토노이 빌라 PAL에 오신 것을 환영합니다! 무엇을 도와드릴까요？',
     placeholderText: '메시지를 입력하세요...',
-    quickReplies: ['체크인 방법은?', '근처 음식점은?', 'Wi-Fi 비밀번호는?', '지역 관광지는?']
+    quickReplies: ['체크인 방법은?', '근처 음식점은?', 'Wi-Fi 비밀번호는?', '자세히 알려줘']
   }
 ];
 
 /**
- * 言語自動検出関数
- * テキストの内容から言語を自動判定します
+ * 改善された言語自動検出関数
+ * 日本語と中国語の区別を正確に行います
  */
 export function detectLanguage(text: string): string {
   if (!text || text.trim().length === 0) return 'ja';
@@ -57,13 +57,45 @@ export function detectLanguage(text: string): string {
   // 韓国語検出（ハングル文字）
   if (/[\uac00-\ud7af]/.test(text)) return 'ko';
   
-  // 中国語検出（簡体字・繁体字）
-  if (/[\u4e00-\u9fff]/.test(text)) return 'zh';
-  
-  // 英語検出（日本語文字がなく、アルファベットが主の場合）
-  if (/[a-zA-Z]/.test(text) && !/[\u3040-\u309f\u30a0-\u30ff]/.test(text)) {
+  // 英語検出（アルファベットが主で、日本語文字がない場合）
+  if (/[a-zA-Z]/.test(text) && !/[\u3040-\u309f\u30a0-\u30ff\u4e00-\u9fff]/.test(text)) {
     const alphabetRatio = (text.match(/[a-zA-Z]/g) || []).length / text.length;
     if (alphabetRatio > 0.5) return 'en';
+  }
+  
+  // 中国語 vs 日本語の詳細判定
+  const hasHiragana = /[\u3040-\u309f]/.test(text); // ひらがな
+  const hasKatakana = /[\u30a0-\u30ff]/.test(text); // カタカナ
+  const hasKanji = /[\u4e00-\u9fff]/.test(text);    // 漢字
+  
+  // 日本語特有の文字（ひらがな・カタカナ）がある場合は日本語
+  if (hasHiragana || hasKatakana) {
+    return 'ja';
+  }
+  
+  // 漢字のみの場合の判定
+  if (hasKanji && !hasHiragana && !hasKatakana) {
+    // 日本語でよく使われる漢字パターンをチェック
+    const japanesePatterns = [
+      /[はがをにでとのもうこそあるいる]/, // ひらがな助詞・動詞
+      /[チェック|ウィ|パスワード|イン|アウト]/, // カタカナ
+      /[方法|時間|場所|連絡|確認|情報]/, // 日本語でよく使う漢字
+      /[？]/, // 日本語の疑問符
+    ];
+    
+    // 中国語特有のパターン
+    const chinesePatterns = [
+      /[请|您|吗|呢|的|了|在|是|有|我|你|他]/, // 中国語特有の文字
+      /[？].*[请|您|吗]/, // 中国語の疑問文パターン
+    ];
+    
+    // 中国語パターンが強い場合は中国語
+    for (const pattern of chinesePatterns) {
+      if (pattern.test(text)) return 'zh';
+    }
+    
+    // それ以外は日本語とする（安全な判定）
+    return 'ja';
   }
   
   return 'ja'; // デフォルト

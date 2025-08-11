@@ -8,39 +8,17 @@ import { SearchResult, DeepSeekResponse } from '@/types';
 // 設定を取得（これで「サンプル民泊」問題を解決）
 const config = getMinpakuConfig();
 
-// ととのいヴィラ PAL の基本情報
+// 統合版ベースコンテキスト
 const MINPAKU_CONTEXT = `
-あなたは「ととのいヴィラ PAL」のカスタマーサポートAIアシスタントです。以下の情報を参考にして、ゲストの質問に親切で丁寧に回答してください。
+あなたは「ととのいヴィラ PAL」のカスタマーサポートAIです。
 
 基本情報:
-- 施設名: ${config.propertyName}
+- 施設: ${config.propertyName}
 - 住所: ${config.address}
-- 施設タイプ: ${config.propertyType}
-- チェックイン時間: ${config.checkinTime}
-- チェックアウト時間: ${config.checkoutTime}
-- Wi-Fiパスワード: ${config.wifiPassword}
-- 緊急連絡先: ${config.emergencyContact}
-
-アクセス情報:
-- ナビ設定: ${config.access.naviSetting}
-- 経由地推奨: ${config.access.viaPoint}
-- 注意事項: ${config.access.notes}
-
-BBQ・お買い物情報:
-- ${config.bbqInfo.preparation}
-- ${config.bbqInfo.shoppingArea}
-
-おすすめショップ:
-1. スーパーあおき 函南店（車15分）- 地元食材が豊富
-2. 杉山鮮魚店（車10分）- 沼津港直送の新鮮魚介、鯵の干物が名物
-3. 良酒倉庫 宮内酒店（車10分）- 伊豆の地酒・クラフトビール
-
-回答の際の注意点:
-1. 常に丁寧で親切な日本語で回答してください
-2. BBQや自然を楽しむ滞在をサポートしてください
-3. 地元の新鮮な食材やお店の情報を積極的に案内してください
-4. アクセスの質問には経由地設定をおすすめしてください
-5. 不明な点は「確認いたします」と答え、緊急連絡先をお伝えください
+- チェックイン: ${config.checkinTime} / チェックアウト: ${config.checkoutTime}
+- Wi-Fi: ${config.wifiPassword}
+- 緊急連絡: ${config.emergencyContact}
+- アクセス: ${config.access.naviSetting}
 `;
 
 // DeepSeek API設定
@@ -53,28 +31,82 @@ interface Message {
 }
 
 /**
- * Generate multilingual context with language-specific instructions
+ * 統合版多言語コンテキスト生成（簡潔+段階的詳細対応）
  */
 function generateMultilingualContext(language: string, enhancedContext: string): string {
   const langConfig = getLanguageConfig(language);
   
+  const unifiedPrompts = {
+    ja: `${langConfig.systemPrompt}
+
+【統合回答システム】
+
+▼ 基本回答（デフォルト）:
+- 2-3文で簡潔に要点のみ回答
+- 必要最低限の情報を提供
+- 冗長な説明や前置きは不要
+- 直接的で親切な回答
+- 最後に「📋 詳しく知りたい場合は『詳細を教えて』とお聞きください」を追加
+
+▼ 詳細回答（ユーザーが「詳細」「詳しく」「もっと教えて」「詳細を教えて」等を要求した場合）:
+- 前回の基本回答を踏まえて詳細説明
+- 手順、注意点、追加情報を含める
+- 具体的で実用的な情報を提供
+- 最大300文字程度で完結`,
+
+    en: `${langConfig.systemPrompt}
+
+【UNIFIED RESPONSE SYSTEM】
+
+▼ Basic Response (Default):
+- 2-3 sentences with essential info only
+- No lengthy explanations or introductions
+- Direct and helpful answers
+- End with "📋 Ask 'tell me more' for detailed information"
+
+▼ Detailed Response (When user requests "more details", "tell me more", "explain more", etc.):
+- Build upon previous basic response
+- Include steps, tips, and additional information
+- Practical and specific details
+- Maximum ~200 words`,
+
+    zh: `${langConfig.systemPrompt}
+
+【统一回答系统】
+
+▼ 基础回答（默认）:
+- 2-3句话简洁回答要点
+- 只提供必要信息，无冗长说明
+- 直接且有用的答案
+- 结尾加"📋 如需详细信息请说'告诉我更多'"
+
+▼ 详细回答（用户要求"详细"、"更多"、"详细说明"等时）:
+- 基于之前的基础回答提供详细说明
+- 包含步骤、注意事项和补充信息
+- 实用具体的详细内容`,
+
+    ko: `${langConfig.systemPrompt}
+
+【통합 답변 시스템】
+
+▼ 기본 답변（기본값）:
+- 2-3문장으로 요점만 간결하게
+- 필수 정보만 제공, 장황한 설명 금지
+- 직접적이고 도움이 되는 답변
+- 마지막에 "📋 자세한 정보가 필요하면 '자세히 알려줘'라고 말씀해주세요" 추가
+
+▼ 상세 답변（사용자가 "자세히", "더 알려줘", "상세히" 등 요청시）:
+- 이전 기본 답변을 바탕으로 상세 설명
+- 단계별 설명, 주의사항, 추가 정보 포함
+- 실용적이고 구체적인 상세 내용`
+  };
+
   const multilingualContext = `
 ${enhancedContext}
 
-重要な言語指示:
-${langConfig.systemPrompt}
+${unifiedPrompts[language as keyof typeof unifiedPrompts] || unifiedPrompts.ja}
 
-${langConfig.name}での追加ガイドライン:
-- 必ず${langConfig.name}で回答してください
-- 自然で会話的なトーンを使用してください
-- 役立つ場合は文化的コンテキストを含めてください
-- 日本語以外の方には、関連する日本の習慣も説明してください
-- 通貨: 価格はJPY（¥）で表示し、必要に応じてUSD/EUR/CNY換算も提供
-- 日付: 適切な現地フォーマットを使用
-- 時間: 24時間制を使用し、関連する場合は日本標準時（JST）と記載
-
-施設名（${langConfig.name}）:
-${language === 'ja' ? 'ととのいヴィラ PAL' : 
+施設名: ${language === 'ja' ? 'ととのいヴィラ PAL' : 
   language === 'en' ? 'Totonoiii Villa PAL' :
   language === 'zh' ? '整备别墅PAL' : 
   language === 'ko' ? '토토노이 빌라 PAL' : 'ととのいヴィラ PAL'}
@@ -152,17 +184,41 @@ export async function POST(req: NextRequest) {
       detectedLanguage = detectLanguage(lastUserMessage);
     }
 
-    // 最新のユーザーメッセージを取得してRAGコンテキストを生成
+    // 最新ユーザーメッセージを取得
     const userMessages = messages.filter((msg: Message) => msg.role === 'user');
     const latestUserMessage = userMessages[userMessages.length - 1]?.content || '';
     
-    // RAG検索を使用して拡張コンテキストを生成
-    const enhancedContext = await generateRAGContext(latestUserMessage);
+    // 詳細要求の検出（統合版）
+    const detailRequestKeywords = {
+      ja: ['詳細', '詳しく', 'もっと教えて', 'さらに', '詳細を教えて', 'くわしく', 'もっと詳しく'],
+      en: ['more details', 'tell me more', 'explain more', 'more info', 'detailed', 'elaborate'],
+      zh: ['详细', '更多', '告诉我更多', '详细说明', '更详细'],
+      ko: ['자세히', '더 알려줘', '상세히', '자세한 정보', '더 자세히']
+    };
     
-    // 多言語コンテキストを生成
-    const multilingualContext = generateMultilingualContext(detectedLanguage, enhancedContext);
+    const keywords = detailRequestKeywords[detectedLanguage as keyof typeof detailRequestKeywords] || detailRequestKeywords.ja;
+    const isDetailRequest = keywords.some(keyword => 
+      latestUserMessage.toLowerCase().includes(keyword.toLowerCase())
+    );
+    
+    // RAG検索（簡潔版）
+    const searchResults = await searchSimilarDocuments(latestUserMessage, 0.1, isDetailRequest ? 8 : 3);
+    let ragContext = MINPAKU_CONTEXT;
+    
+    if (searchResults.length > 0) {
+      const maxContentLength = isDetailRequest ? 200 : 80; // 詳細要求時は長めに
+      ragContext = `${MINPAKU_CONTEXT}
 
-    // システムメッセージを含むメッセージ配列を構築（多言語対応）
+関連情報:
+${searchResults.map((result: SearchResult, index: number) => 
+  `${index + 1}. ${result.title}: ${result.content.substring(0, maxContentLength)}${result.content.length > maxContentLength ? '...' : ''}`
+).join('\n')}`;
+    }
+    
+    // 統合多言語コンテキスト生成
+    const multilingualContext = generateMultilingualContext(detectedLanguage, ragContext);
+
+    // メッセージ配列構築
     const formattedMessages: Message[] = [
       { role: 'system', content: multilingualContext },
       ...messages.map((msg: { role: string; content: string }) => ({
@@ -171,12 +227,12 @@ export async function POST(req: NextRequest) {
       }))
     ];
 
-    // DeepSeek APIリクエスト設定
+    // 統合API設定
     const requestData = {
       model: 'deepseek-chat',
       messages: formattedMessages,
-      temperature: 0.7,
-      max_tokens: 2000,
+      temperature: isDetailRequest ? 0.4 : 0.3, // 詳細要求時は少し創造性アップ
+      max_tokens: isDetailRequest ? 350 : 150,  // 簡潔150 / 詳細350
       stream: true
     };
 

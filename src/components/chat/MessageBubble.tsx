@@ -19,43 +19,39 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
       exit={{ opacity: 0, y: -10, scale: 0.95 }}
       transition={{ duration: 0.3, ease: "easeOut" }}
       className={cn(
-        "flex items-end space-x-2",
-        isUser ? "justify-end flex-row-reverse space-x-reverse" : "justify-start"
+        "flex items-end space-x-2 w-full",
+        isUser ? "justify-end" : "justify-start"
       )}
     >
-      {/* アバター */}
-      <motion.div
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ delay: 0.1 }}
-        className={cn(
-          "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0",
-          isUser
-            ? "bg-gradient-to-br from-blue-500 to-purple-500"
-            : "bg-gradient-to-br from-orange-500 to-amber-500"
-        )}
-      >
-        {isUser ? (
-          <User className="w-4 h-4 text-white" />
-        ) : (
-          <Bot className="w-4 h-4 text-white" />
-        )}
-      </motion.div>
+      {/* AIアバター（左側にのみ表示） */}
+      {!isUser && (
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.1 }}
+          className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0 mb-1"
+        >
+          <Bot className="w-3.5 h-3.5 text-white" />
+        </motion.div>
+      )}
 
-      {/* メッセージバブル */}
-      <div className="flex flex-col max-w-[75%]">
+      {/* メッセージコンテナ */}
+      <div className={cn(
+        "flex flex-col",
+        isUser ? "items-end max-w-[85%]" : "items-start max-w-[85%]"
+      )}>
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ delay: 0.05 }}
           className={cn(
-            "px-4 py-3 rounded-2xl jp-text shadow-lg backdrop-blur-sm",
+            "px-3 py-2.5 rounded-2xl text-sm leading-relaxed shadow-sm",
             isUser
-              ? "bg-gradient-to-br from-blue-500 to-purple-500 text-white rounded-br-md"
-              : "bg-white/90 dark:bg-gray-800/90 text-gray-800 dark:text-gray-200 border border-orange-100 dark:border-gray-700 rounded-bl-md"
+              ? "bg-blue-600 text-white rounded-br-md" // ユーザー: 青背景、右下角を直角
+              : "bg-white text-gray-800 border border-gray-200 rounded-bl-md" // AI: 白背景、左下角を直角
           )}
         >
-          <p className="text-sm leading-relaxed whitespace-pre-wrap">
+          <p className="whitespace-pre-wrap break-words">
             {message.content}
           </p>
         </motion.div>
@@ -66,13 +62,25 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2 }}
           className={cn(
-            "text-xs mt-1 px-2 text-gray-500 dark:text-gray-400",
-            isUser ? "text-right" : "text-left"
+            "text-xs mt-1 text-gray-500",
+            isUser ? "mr-2" : "ml-2"
           )}
         >
           {formatTime(message.timestamp)}
         </motion.p>
       </div>
+
+      {/* ユーザーアバター（右側にのみ表示） */}
+      {isUser && (
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.1 }}
+          className="w-7 h-7 rounded-full bg-gradient-to-br from-gray-600 to-gray-700 flex items-center justify-center flex-shrink-0 mb-1"
+        >
+          <User className="w-3.5 h-3.5 text-white" />
+        </motion.div>
+      )}
     </motion.div>
   );
 }
