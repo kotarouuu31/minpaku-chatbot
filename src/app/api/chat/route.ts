@@ -31,80 +31,120 @@ interface Message {
 }
 
 /**
- * 統合版多言語コンテキスト生成（簡潔+段階的詳細対応）
+ * 段階的回答システム（改良版）
+ * 長い回答を自動的に複数のパートに分割
  */
 function generateMultilingualContext(language: string, enhancedContext: string): string {
   const langConfig = getLanguageConfig(language);
   
-  const unifiedPrompts = {
+  const optimizedPrompts = {
     ja: `${langConfig.systemPrompt}
 
-【統合回答システム】
+【最適化2段階回答システム】
 
-▼ 基本回答（デフォルト）:
-- 2-3文で簡潔に要点のみ回答
-- 必要最低限の情報を提供
-- 冗長な説明や前置きは不要
-- 直接的で親切な回答
-- 最後に「📋 詳しく知りたい場合は『詳細を教えて』とお聞きください」を追加
+■ 基本回答モード（デフォルト）:
+- 最大300文字以内で回答
+- 重要な情報を3-5文で分かりやすく説明
+- 具体的で実用的な情報を含める
+- 簡潔でありながら満足度の高い回答
+- 末尾に「📋 詳しく知りたい場合は『詳細を教えて』とお聞きください」を必ず追加
 
-▼ 詳細回答（ユーザーが「詳細」「詳しく」「もっと教えて」「詳細を教えて」等を要求した場合）:
-- 前回の基本回答を踏まえて詳細説明
-- 手順、注意点、追加情報を含める
-- 具体的で実用的な情報を提供
-- 最大300文字程度で完結`,
+■ 詳細回答モード（「詳細」「詳しく」「もっと教えて」等の要求時）:
+- 最大1500文字以内で包括的に回答
+- 前回の基本回答を徹底的に詳しく説明
+- 手順、方法、注意点、周辺情報を網羅的に提供
+- 具体例、時間、場所、連絡先なども含める
+- 箇条書きや段落を使って読みやすく構成
+- ユーザーが完全に満足できる詳細レベルで回答
+- 「他にご質問がございましたらお聞かせください」で終了
+
+重要: 
+- 基本モードは300文字、詳細モードは1500文字を最大限活用
+- 各モードで適切な情報量を提供し、中途半端に終わらないこと
+- 情報を出し惜しみせず、ユーザーが求める全ての情報を提供すること`,
 
     en: `${langConfig.systemPrompt}
 
-【UNIFIED RESPONSE SYSTEM】
+【OPTIMIZED 2-STAGE RESPONSE SYSTEM】
 
-▼ Basic Response (Default):
-- 2-3 sentences with essential info only
-- No lengthy explanations or introductions
-- Direct and helpful answers
+■ Basic Mode (Default):
+- Maximum 200 words
+- 3-5 sentences with clear, practical information
+- Concise but satisfying answers
+- Include specific, useful details
 - End with "📋 Ask 'tell me more' for detailed information"
 
-▼ Detailed Response (When user requests "more details", "tell me more", "explain more", etc.):
-- Build upon previous basic response
-- Include steps, tips, and additional information
-- Practical and specific details
-- Maximum ~200 words`,
+■ Detailed Mode ("more details", "tell me more", "explain more", etc.):
+- Maximum 1000 words for comprehensive coverage
+- Thoroughly elaborate on the basic response
+- Include comprehensive steps, methods, tips, and context
+- Provide specific examples, times, locations, contacts
+- Use bullet points and paragraphs for readability
+- Give complete satisfaction with detailed information
+- End with "Please let me know if you have any other questions"
+
+Important: 
+- Fully utilize the word limits for each mode
+- Provide complete information without holding back
+- Ensure responses don't end abruptly`,
 
     zh: `${langConfig.systemPrompt}
 
-【统一回答系统】
+【优化两阶段回答系统】
 
-▼ 基础回答（默认）:
-- 2-3句话简洁回答要点
-- 只提供必要信息，无冗长说明
-- 直接且有用的答案
-- 结尾加"📋 如需详细信息请说'告诉我更多'"
+■ 基础模式（默认）:
+- 最多300字
+- 3-5句话提供清晰实用的信息
+- 简洁但令人满意的答案
+- 包含具体有用的细节
+- 结尾"📋 如需详细信息请说'告诉我更多'"
 
-▼ 详细回答（用户要求"详细"、"更多"、"详细说明"等时）:
-- 基于之前的基础回答提供详细说明
-- 包含步骤、注意事项和补充信息
-- 实用具体的详细内容`,
+■ 详细模式（"详细"、"更多"、"详细说明"等）:
+- 最多1500字全面覆盖
+- 彻底详细解释基础回答
+- 包含全面的步骤、方法、注意事项和背景
+- 提供具体例子、时间、地点、联系方式
+- 使用要点和段落便于阅读
+- 提供完全满意的详细信息
+- 以"如有其他问题请告诉我"结束
+
+重要: 
+- 充分利用各模式的字数限制
+- 提供完整信息不保留
+- 确保回答不会突然结束`,
 
     ko: `${langConfig.systemPrompt}
 
-【통합 답변 시스템】
+【최적화 2단계 답변 시스템】
 
-▼ 기본 답변（기본값）:
-- 2-3문장으로 요점만 간결하게
-- 필수 정보만 제공, 장황한 설명 금지
-- 직접적이고 도움이 되는 답변
-- 마지막에 "📋 자세한 정보가 필요하면 '자세히 알려줘'라고 말씀해주세요" 추가
+■ 기본 모드（기본값）:
+- 최대 300자
+- 3-5문장으로 명확하고 실용적인 정보 제공
+- 간결하지만 만족스러운 답변
+- 구체적이고 유용한 세부사항 포함
+- 끝에 "📋 자세한 정보가 필요하면 '자세히 알려줘'라고 말씀해주세요" 추가
 
-▼ 상세 답변（사용자가 "자세히", "더 알려줘", "상세히" 등 요청시）:
-- 이전 기본 답변을 바탕으로 상세 설명
-- 단계별 설명, 주의사항, 추가 정보 포함
-- 실용적이고 구체적인 상세 내용`
+■ 상세 모드（"자세히", "더 알려줘", "상세히" 등）:
+- 최대 1500자로 포괄적 커버리지
+- 기본 답변을 철저히 상세하게 설명
+- 단계, 방법, 주의사항, 주변 정보를 망라적으로 제공
+- 구체적 예시, 시간, 장소, 연락처 포함
+- 요점과 단락으로 읽기 쉽게 구성
+- 완전히 만족할 만한 상세 정보 제공
+- "다른 질문이 있으시면 말씀해주세요"로 종료
+
+중요: 
+- 각 모드의 글자수 제한을 최대한 활용
+- 완전한 정보를 제공하고 아끼지 말 것
+- 답변이 갑자기 끝나지 않도록 보장
+
+중요: 절대 글자수 초과 금지`
   };
 
   const multilingualContext = `
 ${enhancedContext}
 
-${unifiedPrompts[language as keyof typeof unifiedPrompts] || unifiedPrompts.ja}
+${optimizedPrompts[language as keyof typeof optimizedPrompts] || optimizedPrompts.ja}
 
 施設名: ${language === 'ja' ? 'ととのいヴィラ PAL' : 
   language === 'en' ? 'Totonoiii Villa PAL' :
@@ -188,33 +228,63 @@ export async function POST(req: NextRequest) {
     const userMessages = messages.filter((msg: Message) => msg.role === 'user');
     const latestUserMessage = userMessages[userMessages.length - 1]?.content || '';
     
-    // 詳細要求の検出（統合版）
+    // 最適化された2段階システム
+    const tokenSettings = {
+      basic: { 
+        max: 400,      // 基本回答: 最大300文字（余裕を持って400トークン）
+        temp: 0.3,
+        description: '簡潔だが十分な情報提供'
+      },
+      detail: { 
+        max: 2000,     // 詳細回答: 最大1500文字（余裕を持って2000トークン）
+        temp: 0.4,
+        description: '包括的で詳細な情報提供'
+      }
+    };
+
+    // シンプルな詳細要求検出（level3削除）
     const detailRequestKeywords = {
       ja: ['詳細', '詳しく', 'もっと教えて', 'さらに', '詳細を教えて', 'くわしく', 'もっと詳しく'],
       en: ['more details', 'tell me more', 'explain more', 'more info', 'detailed', 'elaborate'],
       zh: ['详细', '更多', '告诉我更多', '详细说明', '更详细'],
       ko: ['자세히', '더 알려줘', '상세히', '자세한 정보', '더 자세히']
     };
-    
+
     const keywords = detailRequestKeywords[detectedLanguage as keyof typeof detailRequestKeywords] || detailRequestKeywords.ja;
+
     const isDetailRequest = keywords.some(keyword => 
       latestUserMessage.toLowerCase().includes(keyword.toLowerCase())
     );
-    
-    // RAG検索（簡潔版）
-    const searchResults = await searchSimilarDocuments(latestUserMessage, 0.1, isDetailRequest ? 8 : 3);
+
+    // シンプルな2段階判定
+    const responseLevel: 'basic' | 'detail' = isDetailRequest ? 'detail' : 'basic';
+    const currentSettings = tokenSettings[responseLevel];
+
+    console.log(`[CHAT-API] ${responseLevel} mode: ${currentSettings.description}, max_tokens: ${currentSettings.max}`);
+
+    // レベル別RAG検索
+    const searchResults = await searchSimilarDocuments(
+      latestUserMessage, 
+      0.1, 
+      isDetailRequest ? 12 : 5  // 詳細時は12件、基本時は5件
+    );
+
     let ragContext = MINPAKU_CONTEXT;
-    
+
     if (searchResults.length > 0) {
-      const maxContentLength = isDetailRequest ? 200 : 80; // 詳細要求時は長めに
+      const maxContentLength = isDetailRequest ? 250 : 100; // 詳細時は長めに
       ragContext = `${MINPAKU_CONTEXT}
 
 関連情報:
 ${searchResults.map((result: SearchResult, index: number) => 
   `${index + 1}. ${result.title}: ${result.content.substring(0, maxContentLength)}${result.content.length > maxContentLength ? '...' : ''}`
 ).join('\n')}`;
+      
+      console.log(`[CHAT-API] RAG context enhanced with ${searchResults.length} documents (${responseLevel} mode)`);
+    } else {
+      console.log(`[CHAT-API] No RAG results found, using base context (${responseLevel} mode)`);
     }
-    
+
     // 統合多言語コンテキスト生成
     const multilingualContext = generateMultilingualContext(detectedLanguage, ragContext);
 
@@ -227,14 +297,27 @@ ${searchResults.map((result: SearchResult, index: number) =>
       }))
     ];
 
-    // 統合API設定
+    // レベル別API設定
     const requestData = {
       model: 'deepseek-chat',
       messages: formattedMessages,
-      temperature: isDetailRequest ? 0.4 : 0.3, // 詳細要求時は少し創造性アップ
-      max_tokens: isDetailRequest ? 350 : 150,  // 簡潔150 / 詳細350
-      stream: true
+      temperature: currentSettings.temp,
+      max_tokens: currentSettings.max,
+      stream: true,
+      stop: ['<END>', '---', '\n\n\n'], // 自然な停止ポイント
+      presence_penalty: 0.1, // 繰り返し防止
+      frequency_penalty: 0.1  // 冗長性防止
     };
+
+    console.log(`[CHAT-API] Response level: ${responseLevel}, max_tokens: ${currentSettings.max}`);
+
+    // デバッグログ追加
+    console.log('[CHAT-API] Request details:', {
+      responseLevel,
+      maxTokens: requestData.max_tokens,
+      systemPromptLength: multilingualContext.length,
+      totalMessagesLength: formattedMessages.reduce((sum, msg) => sum + msg.content.length, 0)
+    });
 
     // DeepSeek APIへのリクエスト
     const response = await axios.post(DEEPSEEK_API_URL, requestData, {
@@ -246,12 +329,15 @@ ${searchResults.map((result: SearchResult, index: number) =>
       timeout: 30000, // 30秒タイムアウト
     });
 
-    // ストリーミングレスポンスの設定
+    // ストリーミングレスポンスの設定（改善版）
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
         try {
           let buffer = '';
+          let isComplete = false;
+          let responseLength = 0;
+          let responseText = '';
           
           response.data.on('data', (chunk: Buffer) => {
             buffer += chunk.toString();
@@ -261,6 +347,7 @@ ${searchResults.map((result: SearchResult, index: number) =>
             for (const line of lines) {
               const trimmedLine = line.trim();
               if (trimmedLine === '' || trimmedLine === 'data: [DONE]') {
+                isComplete = true;
                 continue;
               }
 
@@ -269,10 +356,39 @@ ${searchResults.map((result: SearchResult, index: number) =>
                   const jsonStr = trimmedLine.slice(6);
                   const data = JSON.parse(jsonStr);
                   
-                  if (data.choices && data.choices[0] && data.choices[0].delta && data.choices[0].delta.content) {
-                    const content = data.choices[0].delta.content;
-                    const formattedChunk = `0:${JSON.stringify({ content })}\n`;
-                    controller.enqueue(encoder.encode(formattedChunk));
+                  // finish_reasonのチェックを追加
+                  if (data.choices && data.choices[0]) {
+                    const choice = data.choices[0];
+                    
+                    // コンテンツがある場合
+                    if (choice.delta && choice.delta.content) {
+                      const content = choice.delta.content;
+                      responseText += content;
+                      responseLength += content.length;
+                      
+                      // 長さ監視（デバッグ用）
+                      if (responseLength > 300) {
+                        console.warn(`[CHAT-API] Response getting long: ${responseLength} chars`);
+                      }
+                      
+                      const formattedChunk = `0:${JSON.stringify({ content })}\n`;
+                      controller.enqueue(encoder.encode(formattedChunk));
+                    }
+                    
+                    // 完了チェック
+                    if (choice.finish_reason) {
+                      console.log(`[CHAT-API] Final response: ${responseLength} chars, reason: ${choice.finish_reason}`);
+                      
+                      // length制限で切れた場合の警告
+                      if (choice.finish_reason === 'length') {
+                        console.warn('[CHAT-API] Response was truncated due to max_tokens limit');
+                        // 必要に応じて「...続きがあります」的なメッセージを送信
+                        const continueMsg = `0:${JSON.stringify({ content: '\n\n（回答が長くなったため一部省略されました）' })}\n`;
+                        controller.enqueue(encoder.encode(continueMsg));
+                      }
+                      
+                      isComplete = true;
+                    }
                   }
                 } catch (parseError) {
                   console.error('JSON parse error:', parseError);
@@ -282,6 +398,7 @@ ${searchResults.map((result: SearchResult, index: number) =>
           });
 
           response.data.on('end', () => {
+            console.log('[CHAT-API] Stream ended, complete:', isComplete);
             controller.close();
           });
 

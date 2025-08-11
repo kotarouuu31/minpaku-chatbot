@@ -13,7 +13,7 @@ export const SUPPORTED_LANGUAGES: LanguageConfig[] = [
     code: 'ja',
     name: '日本語',
     flag: '🇯🇵',
-    systemPrompt: '簡潔で親切な日本語で回答してください。基本は2-3文、詳細要求時はより詳しく説明してください。',
+    systemPrompt: '基本は300文字以内で十分な情報を、詳細要求時は1500文字以内で徹底的に回答してください。',
     welcomeMessage: 'ととのいヴィラPALへようこそ！ご質問をお聞かせください。',
     placeholderText: 'メッセージを入力してください...',
     quickReplies: ['チェックイン方法は？', '近くのお店を教えて', 'Wi-Fiパスワードは？', '詳細を教えて']
@@ -22,7 +22,7 @@ export const SUPPORTED_LANGUAGES: LanguageConfig[] = [
     code: 'en',
     name: 'English',
     flag: '🇺🇸',
-    systemPrompt: 'Respond concisely (2-3 sentences) by default, provide details when requested.',
+    systemPrompt: 'Basic responses within 200 words with sufficient info, detailed responses within 1000 words when requested.',
     welcomeMessage: 'Welcome to Totonoiii Villa PAL! How can I help you?',
     placeholderText: 'Type your message...',
     quickReplies: ['How to check in?', 'Nearby restaurants?', 'Wi-Fi password?', 'Tell me more']
@@ -31,7 +31,7 @@ export const SUPPORTED_LANGUAGES: LanguageConfig[] = [
     code: 'zh',
     name: '中文',
     flag: '🇨🇳',
-    systemPrompt: '默认简洁回答2-3句话，有详细要求时提供详细说明。',
+    systemPrompt: '基础回答300字内提供充分信息，详细要求时1500字内全面回答。',
     welcomeMessage: '欢迎来到整备别墅PAL！有什么可以帮助您的吗？',
     placeholderText: '请输入您的消息...',
     quickReplies: ['如何办理入住？', '附近的餐厅？', 'Wi-Fi密码？', '告诉我更多']
@@ -40,7 +40,7 @@ export const SUPPORTED_LANGUAGES: LanguageConfig[] = [
     code: 'ko',
     name: '한국어',
     flag: '🇰🇷',
-    systemPrompt: '기본은 2-3문장으로 간결하게, 상세 요청시 자세히 설명해주세요.',
+    systemPrompt: '기본 답변은 300자 내 충분한 정보로, 상세 요청시 1500자 내 포괄적으로 답변하세요.',
     welcomeMessage: '토토노이 빌라 PAL에 오신 것을 환영합니다! 무엇을 도와드릴까요？',
     placeholderText: '메시지를 입력하세요...',
     quickReplies: ['체크인 방법은?', '근처 음식점은?', 'Wi-Fi 비밀번호는?', '자세히 알려줘']
