@@ -36,8 +36,19 @@ export interface EmbedConfig {
 }
 
 export interface ParentMessage {
-  type: "resize" | "close" | "minimize" | "theme-change";
+  type: "resize" | "close" | "minimize" | "theme-change" | "language-change";
   data?: Record<string, unknown>;
+}
+
+// 多言語関連の型定義
+export interface LanguageConfig {
+  code: string;
+  name: string;
+  flag: string;
+  systemPrompt: string;
+  welcomeMessage: string;
+  placeholderText: string;
+  quickReplies: string[];
 }
 
 // RAG関連の型定義

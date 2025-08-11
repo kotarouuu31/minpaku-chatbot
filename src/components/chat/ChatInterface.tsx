@@ -5,8 +5,11 @@ import { Send, Minimize2, X, Home as HomeIcon, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Message } from "@/types";
 import { cn, scrollToBottom, postMessageToParent } from "@/lib/utils";
+import { getLanguageConfig, detectLanguage } from "@/lib/language-detection";
 import MessageBubble from "./MessageBubble";
 import TypingIndicator from "./TypingIndicator";
+import LanguageSelector from "./LanguageSelector";
+import QuickReplies from "./QuickReplies";
 
 interface ChatInterfaceProps {
   isEmbedded?: boolean;
@@ -17,22 +20,30 @@ interface ChatInterfaceProps {
 
 export default function ChatInterface({
   isEmbedded = false,
-  welcomeMessage = "こんにちは！民泊に関するご質問がございましたら、お気軽にお聞かせください。チェックイン方法、Wi-Fi設定、周辺情報など、何でもお聞きください。",
+  welcomeMessage,
   onClose,
   onMinimize,
 }: ChatInterfaceProps) {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "welcome",
-      content: welcomeMessage,
-      role: "assistant",
-      timestamp: new Date(),
-    },
-  ]);
+  const [selectedLanguage, setSelectedLanguage] = useState('ja');
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // 言語設定を取得
+  const currentLangConfig = getLanguageConfig(selectedLanguage);
+
+  // 初期ウェルカムメッセージを設定
+  useEffect(() => {
+    const initialMessage: Message = {
+      id: 'welcome',
+      content: welcomeMessage || currentLangConfig.welcomeMessage,
+      role: 'assistant',
+      timestamp: new Date()
+    };
+    setMessages([initialMessage]);
+  }, [selectedLanguage, welcomeMessage]); // 言語変更時にウェルカムメッセージも更新
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -40,12 +51,41 @@ export default function ChatInterface({
     }
   }, [messages]);
 
-  const handleSendMessage = async () => {
-    if (!input.trim() || isLoading) return;
+  // 言語変更ハンドラー
+  const handleLanguageChange = (newLanguage: string) => {
+    setSelectedLanguage(newLanguage);
+    
+    // 言語変更をユーザーに通知
+    const langConfig = getLanguageConfig(newLanguage);
+    const languageChangeMessage: Message = {
+      id: `lang-change-${Date.now()}`,
+      content: langConfig.welcomeMessage,
+      role: 'assistant',
+      timestamp: new Date()
+    };
+    
+    setMessages([languageChangeMessage]);
+  };
+
+  // クイック返信ハンドラー
+  const handleQuickReply = (quickReplyText: string) => {
+    setInput(quickReplyText);
+    sendMessage(quickReplyText);
+  };
+
+  // メッセージ送信（言語情報を含める）
+  const sendMessage = async (content: string) => {
+    if (!content.trim() || isLoading) return;
+
+    // 自動言語検出（ユーザーが手動で選択していない場合）
+    const detectedLang = detectLanguage(content);
+    if (detectedLang !== selectedLanguage) {
+      setSelectedLanguage(detectedLang);
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
-      content: input.trim(),
+      content: content.trim(),
       role: "user",
       timestamp: new Date(),
     };
@@ -71,7 +111,8 @@ export default function ChatInterface({
           messages: [...messages, userMessage].map(msg => ({
             role: msg.role,
             content: msg.content
-          }))
+          })),
+          language: selectedLanguage  // 言語情報を追加
         }),
       });
 
@@ -152,8 +193,12 @@ export default function ChatInterface({
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSendMessage();
+      sendMessage(input);
     }
+  };
+
+  const handleSendMessage = () => {
+    sendMessage(input);
   };
 
   const handleClose = () => {
@@ -202,6 +247,10 @@ export default function ChatInterface({
         </motion.div>
         
         <div className="flex items-center space-x-2">
+          <LanguageSelector 
+            selectedLanguage={selectedLanguage}
+            onLanguageChange={handleLanguageChange}
+          />
           {!isEmbedded && onMinimize && (
             <motion.button
               whileHover={{ scale: 1.1 }}
@@ -246,7 +295,7 @@ export default function ChatInterface({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="メッセージを入力してください..."
+              placeholder={currentLangConfig.placeholderText}
               className="w-full px-4 py-3 bg-white dark:bg-gray-800 border border-orange-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent jp-text placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-all duration-200"
               disabled={isLoading}
             />
@@ -269,6 +318,10 @@ export default function ChatInterface({
         </div>
         
         {/* クイック返信ボタン */}
+        <QuickReplies 
+          language={selectedLanguage}
+          onQuickReply={handleQuickReply}
+        />
         {messages.length === 1 && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}

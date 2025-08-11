@@ -2,6 +2,7 @@ import axios from 'axios';
 import { NextRequest } from 'next/server';
 import { searchSimilarDocuments } from '@/lib/rag';
 import { getMinpakuConfig } from '@/config/minpaku-config';
+import { detectLanguage, getLanguageConfig } from '@/lib/language-detection';
 import { SearchResult, DeepSeekResponse } from '@/types';
 
 // 設定を取得（これで「サンプル民泊」問題を解決）
@@ -52,6 +53,37 @@ interface Message {
 }
 
 /**
+ * Generate multilingual context with language-specific instructions
+ */
+function generateMultilingualContext(language: string, enhancedContext: string): string {
+  const langConfig = getLanguageConfig(language);
+  
+  const multilingualContext = `
+${enhancedContext}
+
+重要な言語指示:
+${langConfig.systemPrompt}
+
+${langConfig.name}での追加ガイドライン:
+- 必ず${langConfig.name}で回答してください
+- 自然で会話的なトーンを使用してください
+- 役立つ場合は文化的コンテキストを含めてください
+- 日本語以外の方には、関連する日本の習慣も説明してください
+- 通貨: 価格はJPY（¥）で表示し、必要に応じてUSD/EUR/CNY換算も提供
+- 日付: 適切な現地フォーマットを使用
+- 時間: 24時間制を使用し、関連する場合は日本標準時（JST）と記載
+
+施設名（${langConfig.name}）:
+${language === 'ja' ? 'ととのいヴィラ PAL' : 
+  language === 'en' ? 'Totonoiii Villa PAL' :
+  language === 'zh' ? '整备别墅PAL' : 
+  language === 'ko' ? '토토노이 빌라 PAL' : 'ととのいヴィラ PAL'}
+`;
+
+  return multilingualContext;
+}
+
+/**
  * Generate enhanced context using RAG search
  */
 async function generateRAGContext(userQuery: string): Promise<string> {
@@ -99,7 +131,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { messages } = await req.json();
+    const { messages, language } = await req.json();
 
     // メッセージの検証
     if (!messages || !Array.isArray(messages)) {
@@ -112,16 +144,27 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // 言語検出または指定された言語を使用
+    let detectedLanguage = language || 'ja';
+    if (!language && messages.length > 0) {
+      const userMessages = messages.filter((msg: Message) => msg.role === 'user');
+      const lastUserMessage = userMessages[userMessages.length - 1]?.content || '';
+      detectedLanguage = detectLanguage(lastUserMessage);
+    }
+
     // 最新のユーザーメッセージを取得してRAGコンテキストを生成
     const userMessages = messages.filter((msg: Message) => msg.role === 'user');
     const latestUserMessage = userMessages[userMessages.length - 1]?.content || '';
     
     // RAG検索を使用して拡張コンテキストを生成
     const enhancedContext = await generateRAGContext(latestUserMessage);
+    
+    // 多言語コンテキストを生成
+    const multilingualContext = generateMultilingualContext(detectedLanguage, enhancedContext);
 
-    // システムメッセージを含むメッセージ配列を構築
+    // システムメッセージを含むメッセージ配列を構築（多言語対応）
     const formattedMessages: Message[] = [
-      { role: 'system', content: enhancedContext },
+      { role: 'system', content: multilingualContext },
       ...messages.map((msg: { role: string; content: string }) => ({
         role: msg.role as 'user' | 'assistant',
         content: msg.content
