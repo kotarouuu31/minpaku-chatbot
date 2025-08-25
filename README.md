@@ -190,7 +190,7 @@ vercel --prod
 
 ### 現在のデプロイ状況
 
-- **本番URL**: https://minpaku-chatbot-vercel.app
+- **本番URL**: [https://minpaku-chatbot-vercel.app](https://minpaku-chatbot.vercel.app/)
 - **ステータス**: ✅ 正常稼働中
 - **最終デプロイ**: 2025-08-25
 
