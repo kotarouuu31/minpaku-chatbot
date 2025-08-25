@@ -230,7 +230,7 @@ vercel --prod
 - **本番運用**: Vercelを活用したCI/CDパイプラインによる継続的デプロイメント
 
 ### 現在のデプロイ状況
-- **本番URL**: https://minpaku-chatbot-vercel.app
+- **本番URL**: https://minpaku-chatbot.vercel.app
 - **ステータス**: 正常稼働中
 - **最終デプロイ**: 2025-08-25
 
