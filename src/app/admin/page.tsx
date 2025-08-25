@@ -17,12 +17,14 @@ import { Document, SearchResult, InitResult, Category } from "@/types";
 
 // カテゴリ定数
 const CATEGORIES: Category[] = [
-  { key: "チェックイン・チェックアウト", name: "チェックイン・チェックアウト" },
-  { key: "設備・アメニティ", name: "WiFi・設備利用ガイド" },
-  { key: "交通・アクセス", name: "周辺施設情報" },
-  { key: "観光・グルメ", name: "よくある質問・トラブル対応" },
-  { key: "緊急時・安全", name: "緊急時・安全" },
-  { key: "ルール・マナー", name: "ハウスルール・注意事項" }
+  { key: "施設情報", name: "🏠 施設情報・基本案内" },
+  { key: "チェックイン・チェックアウト", name: "🔑 チェックイン・チェックアウト" },
+  { key: "設備・アメニティ", name: "📶 WiFi・設備利用ガイド" },
+  { key: "買い物・グルメ", name: "🛒 買い物・グルメ情報" },
+  { key: "交通・アクセス", name: "🚗 交通・アクセス" },
+  { key: "観光・グルメ", name: "🗾 観光スポット・レジャー" },
+  { key: "緊急時・安全", name: "🚨 緊急時・安全対応" },
+  { key: "ルール・マナー", name: "📋 ハウスルール・注意事項" }
 ];
 
 export default function AdminDashboard() {
@@ -291,12 +293,17 @@ export default function AdminDashboard() {
         >
           {/* ヘッダー */}
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-foreground mb-2 jp-text">
-              RAG管理ダッシュボード
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent mb-4">
+              🏠 ととのいヴィラ PAL 管理画面
             </h1>
-            <p className="text-muted-foreground jp-text">
-              検索拡張生成システムの管理とテスト
+            <p className="text-lg text-gray-600 dark:text-gray-300 mb-2">
+              民泊情報の管理とチャットボット設定
             </p>
+            <div className="flex justify-center space-x-4 text-sm text-gray-500">
+              <span>📊 データ管理</span>
+              <span>🔍 検索テスト</span>
+              <span>✏️ 情報編集</span>
+            </div>
           </div>
 
           {/* 初期化セクション */}
@@ -308,7 +315,16 @@ export default function AdminDashboard() {
           >
             <div className="flex items-center space-x-3 mb-4">
               <Database className="w-6 h-6 text-orange-500" />
-              <h2 className="text-xl font-bold jp-text">データベース初期化</h2>
+              <h2 className="text-xl font-bold">🚀 クイックスタート</h2>
+            </div>
+            
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
+              <p className="text-sm text-blue-700 dark:text-blue-300 mb-2">
+                <strong>初回セットアップ:</strong> まず「民泊情報を登録」ボタンでサンプルデータ（125件）を登録してください
+              </p>
+              <p className="text-xs text-blue-600 dark:text-blue-400">
+                登録後はカテゴリ別に情報を確認・編集できます
+              </p>
             </div>
             
             <div className="flex flex-wrap gap-4 mb-4">
@@ -317,14 +333,14 @@ export default function AdminDashboard() {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => initializeDocuments(false)}
                 disabled={isInitializing}
-                className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white px-6 py-2 rounded-lg font-medium jp-text disabled:opacity-50 flex items-center space-x-2"
+                className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-8 py-3 rounded-xl font-medium disabled:opacity-50 flex items-center space-x-2 shadow-lg"
               >
                 {isInitializing ? (
-                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <RefreshCw className="w-5 h-5 animate-spin" />
                 ) : (
-                  <Upload className="w-4 h-4" />
+                  <Upload className="w-5 h-5" />
                 )}
-                <span>サンプルデータ登録</span>
+                <span>📋 民泊情報を登録 (125件)</span>
               </motion.button>
               
               <motion.button
@@ -332,10 +348,10 @@ export default function AdminDashboard() {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => initializeDocuments(true)}
                 disabled={isInitializing}
-                className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg font-medium jp-text disabled:opacity-50 flex items-center space-x-2"
+                className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white px-6 py-3 rounded-xl font-medium disabled:opacity-50 flex items-center space-x-2 shadow-lg"
               >
-                <Trash2 className="w-4 h-4" />
-                <span>リセット＆再登録</span>
+                <Trash2 className="w-5 h-5" />
+                <span>🗑️ 全削除＆再登録</span>
               </motion.button>
             </div>
 
@@ -378,7 +394,16 @@ export default function AdminDashboard() {
           >
             <div className="flex items-center space-x-3 mb-4">
               <Search className="w-6 h-6 text-orange-500" />
-              <h2 className="text-xl font-bold jp-text">類似検索テスト</h2>
+              <h2 className="text-xl font-bold">🔍 RAG検索テスト</h2>
+            </div>
+            
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mb-4">
+              <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-1">
+                <strong>検索テスト:</strong> 実際のゲストの質問を入力してチャットボットの回答精度を確認
+              </p>
+              <p className="text-xs text-yellow-600 dark:text-yellow-400">
+                例: 「BBQの食材はどこで買えますか？」「Wi-Fiのパスワードは？」
+              </p>
             </div>
             
             <div className="flex space-x-4 mb-4">
@@ -387,21 +412,22 @@ export default function AdminDashboard() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && searchDocuments()}
-                placeholder="検索クエリを入力してください..."
-                className="flex-1 px-4 py-2 bg-white dark:bg-gray-800 border border-orange-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 jp-text"
+                placeholder="例: BBQの食材はどこで買えますか？"
+                className="flex-1 px-4 py-3 bg-white dark:bg-gray-800 border border-orange-200 dark:border-gray-600 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500 text-base"
               />
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={searchDocuments}
                 disabled={isSearching || !searchQuery.trim()}
-                className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white px-6 py-2 rounded-lg font-medium jp-text disabled:opacity-50"
+                className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white px-8 py-3 rounded-xl font-medium disabled:opacity-50 flex items-center space-x-2 shadow-lg"
               >
                 {isSearching ? (
-                  <RefreshCw className="w-4 h-4 animate-spin" />
+                  <RefreshCw className="w-5 h-5 animate-spin" />
                 ) : (
-                  <Search className="w-4 h-4" />
+                  <Search className="w-5 h-5" />
                 )}
+                <span>検索</span>
               </motion.button>
             </div>
 
@@ -441,44 +467,53 @@ export default function AdminDashboard() {
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-2">
                 <FileText className="w-6 h-6 text-orange-500" />
-                <h2 className="text-xl font-bold jp-text">カテゴリ別ドキュメント</h2>
+                <h2 className="text-xl font-bold">📚 情報管理</h2>
               </div>
-              <div className="flex space-x-4">
-                <button
+              <div className="flex space-x-3">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => setShowAddModal(true)}
-                  className="bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors flex items-center space-x-2"
+                  className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white px-6 py-2 rounded-xl font-medium transition-colors flex items-center space-x-2 shadow-lg"
                 >
                   <Upload className="w-4 h-4" />
-                  <span>新規追加</span>
-                </button>
+                  <span>➕ 新規追加</span>
+                </motion.button>
                 {documents.length > 0 && (
-                  <button
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                     onClick={checkDuplicatesAndConflicts}
-                    className="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors flex items-center space-x-2"
+                    className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white px-6 py-2 rounded-xl font-medium transition-colors flex items-center space-x-2 shadow-lg"
                   >
                     <AlertCircle className="w-4 h-4" />
-                    <span>重複・矛盾チェック</span>
-                  </button>
+                    <span>🔍 品質チェック</span>
+                  </motion.button>
                 )}
               </div>
             </div>
             
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-              {categories.map((category) => (
-                <motion.button
-                  key={category.key}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => loadDocumentsByCategory(category.key)}
-                  className={`p-4 rounded-lg border text-left transition-colors jp-text ${
-                    selectedCategory === category.key
-                      ? 'bg-orange-100 dark:bg-orange-900/30 border-orange-300 dark:border-orange-700'
-                      : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-orange-50 dark:hover:bg-orange-900/10'
-                  }`}
-                >
-                  <div className="font-medium">{category.name}</div>
-                </motion.button>
-              ))}
+            <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 mb-6">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                <strong>カテゴリを選択:</strong> 各カテゴリの情報を確認・編集できます
+              </p>
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3">
+                {categories.map((category) => (
+                  <motion.button
+                    key={category.key}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => loadDocumentsByCategory(category.key)}
+                    className={`p-4 rounded-xl border text-left transition-all duration-200 ${
+                      selectedCategory === category.key
+                        ? 'bg-gradient-to-r from-orange-500 to-amber-500 text-white border-orange-300 shadow-lg transform scale-105'
+                        : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-orange-50 dark:hover:bg-orange-900/10 hover:border-orange-200 shadow-sm'
+                    }`}
+                  >
+                    <div className="font-medium text-sm">{category.name}</div>
+                  </motion.button>
+                ))}
+              </div>
             </div>
 
             {isLoadingDocs && (
