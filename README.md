@@ -1,6 +1,7 @@
 # ととのいヴィラ PAL - AI-Powered Customer Support Chatbot
 
 民泊運営の効率化を目的として開発した、24時間対応のインテリジェントカスタマーサポートシステムです。実際の宿泊施設での運用を想定し、多言語対応とRAG（Retrieval-Augmented Generation）技術を組み合わせることで、ゲストの多様な質問に対して正確で自然な回答を提供します。
+ **本番URL**: https://minpaku-chatbot.vercel.app
 
 ## プロジェクト概要
 
